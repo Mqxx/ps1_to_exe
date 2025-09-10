@@ -1,0 +1,50 @@
+name: '.ps1 to .exe'
+
+on:
+  create:
+    branches: ['*']
+    
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    if: github.ref_type == 'branch'
+    runs-on: windows-latest
+
+    steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v4
+
+      - name: 'Install ps2exe'
+        run: Install-Module -Name ps2exe -Force -Scope CurrentUser -AllowClobber
+        shell: pwsh
+
+      - name: 'Build .exe from all .ps1 in /files'
+        run: |
+          $folder = ".\files"
+          if (-Not (Test-Path $folder)) {
+            Write-Host "Ordner '$folder' existiert nicht. Abbruch."
+            exit 1
+          }
+
+          $ps1Files = Get-ChildItem -Path $folder -Filter *.ps1
+          if ($ps1Files.Count -eq 0) {
+            Write-Host "Keine .ps1-Dateien im Ordner '$folder' gefunden. Abbruch."
+            exit 1
+          }
+
+          New-Item -ItemType Directory -Path output -Force | Out-Null
+
+          foreach ($file in $ps1Files) {
+            $exeName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name) + ".exe"
+            $exePath = Join-Path -Path "output" -ChildPath $exeName
+            Write-Host "Baue $exePath aus $($file.Name)"
+            Invoke-ps2exe $file.FullName $exePath -noConsole
+          }
+        shell: pwsh
+
+      - name: 'Upload all .exe artifacts'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ps-scripts-exe
+          path: output/*.exe
