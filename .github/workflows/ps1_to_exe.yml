@@ -1,8 +1,9 @@
 name: '.ps1 to .exe'
 
 on:
-  create:
-    branches: ['*']
+  push:
+    branches-ignore:
+      - main
     
   workflow_dispatch: {}
 
