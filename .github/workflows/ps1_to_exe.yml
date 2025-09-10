@@ -6,7 +6,10 @@ on:
       - main
       
     paths:
-      - 'files/**'
+      - 'input/**'
+    
+    paths-ignore:
+      - 'input/*.md'
     
   workflow_dispatch: {}
 
@@ -18,14 +21,16 @@ jobs:
     steps:
       - name: 'Checkout repository'
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: 'Install ps2exe'
         run: Install-Module -Name ps2exe -Force -Scope CurrentUser -AllowClobber
         shell: pwsh
 
-      - name: 'Build .exe from all .ps1 in /files'
+      - name: 'Build .exe from all .ps1 in /input'
         run: |
-          $folder = ".\files"
+          $folder = ".\input"
           
           if (-Not (Test-Path $folder)) {
             Write-Host "Ordner '$folder' existiert nicht. Abbruch."
@@ -66,5 +71,17 @@ jobs:
       - name: 'Upload all .exe artifacts'
         uses: actions/upload-artifact@v4
         with:
-          name: files
+          name: output
           path: output/*.exe
+      
+      - name: 'Commit and push generated files'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add output/
+          git commit -m "Upload generated files"
+          
+          $branch = "${{ github.ref_name }}"
+          git push origin HEAD:$branch
+        shell: pwsh
