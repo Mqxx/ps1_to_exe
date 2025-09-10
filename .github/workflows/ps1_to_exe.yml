@@ -6,10 +6,8 @@ on:
       - main
       
     paths:
-      - 'input/**'
-    
-    paths-ignore:
-      - 'input/*.md'
+      - 'input/*.ps1'
+      - 'input/*.ico'
     
   workflow_dispatch: {}
 
