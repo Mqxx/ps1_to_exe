@@ -26,29 +26,45 @@ jobs:
       - name: 'Build .exe from all .ps1 in /files'
         run: |
           $folder = ".\files"
+          
           if (-Not (Test-Path $folder)) {
             Write-Host "Ordner '$folder' existiert nicht. Abbruch."
             exit 1
           }
-
+          
           $ps1Files = Get-ChildItem -Path $folder -Filter *.ps1
           if ($ps1Files.Count -eq 0) {
             Write-Host "Keine .ps1-Dateien im Ordner '$folder' gefunden. Abbruch."
             exit 1
           }
-
+          
           New-Item -ItemType Directory -Path output -Force | Out-Null
-
+          
           foreach ($file in $ps1Files) {
             $exeName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name) + ".exe"
             $exePath = Join-Path -Path "output" -ChildPath $exeName
+            
+            
+            $iconPath = Join-Path -Path $folder -ChildPath ([System.IO.Path]::GetFileNameWithoutExtension($file.Name) + ".ico")
+            
+            if (-Not (Test-Path $iconPath)) {
+              Write-Host "Keine Icon-Datei für $($file.Name) gefunden, baue ohne Icon."
+              $iconPath = $null
+            } else {
+              Write-Host "Verwende Icon $iconPath für $($file.Name)"
+            }
+            
             Write-Host "Baue $exePath aus $($file.Name)"
-            Invoke-ps2exe $file.FullName $exePath
+            if ($iconPath) {
+              Invoke-ps2exe $file.FullName $exePath -iconFile $iconPath
+            } else {
+              Invoke-ps2exe $file.FullName $exePath
+            }
           }
         shell: pwsh
 
       - name: 'Upload all .exe artifacts'
         uses: actions/upload-artifact@v4
         with:
-          name: ps-scripts-exe
+          name: files
           path: output/*.exe
