@@ -43,7 +43,7 @@ jobs:
             $exeName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name) + ".exe"
             $exePath = Join-Path -Path "output" -ChildPath $exeName
             Write-Host "Baue $exePath aus $($file.Name)"
-            Invoke-ps2exe $file.FullName $exePath -noConsole
+            Invoke-ps2exe $file.FullName $exePath
           }
         shell: pwsh
 
